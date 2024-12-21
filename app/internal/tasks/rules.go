@@ -21,11 +21,17 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 	switch rules[0] {
 	// правило для дней
 	case "d":
+
 		return HandleDailyRepeat(now, taskDate, rules)
+	// правило для года
 	case "y":
 		return HandleYearRepeat(now, taskDate, rules)
+	// правило для недели
 	case "w":
 		return HandleWeekRepeat(now, taskDate, rules)
+	// правило для месяца
+	case "m":
+		return HandleMonthRepeat(now, taskDate, rules)
 	default:
 		return "", errors.New("правило повторения не поддерживается")
 	}
