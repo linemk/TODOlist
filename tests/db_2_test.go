@@ -1,13 +1,11 @@
 package tests
 
 import (
-	"os"
-	"testing"
-	"time"
-
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
+	"testing"
+	"time"
 )
 
 type Task struct {
@@ -25,10 +23,12 @@ func count(db *sqlx.DB) (int, error) {
 
 func openDB(t *testing.T) *sqlx.DB {
 	dbfile := DBFile
-	envFile := os.Getenv("TODO_DBFILE")
+
+	envFile := "../database/scheduler.db"
 	if len(envFile) > 0 {
 		dbfile = envFile
 	}
+
 	db, err := sqlx.Connect("sqlite3", dbfile)
 	assert.NoError(t, err)
 	return db
