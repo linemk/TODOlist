@@ -55,6 +55,7 @@ func TestNextDate(t *testing.T) {
 	}
 	check()
 
+	FullNextDate = true
 	if !FullNextDate {
 		return
 	}

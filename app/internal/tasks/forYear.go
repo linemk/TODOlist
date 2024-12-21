@@ -7,7 +7,7 @@ import (
 
 func HandleYearRepeat(now time.Time, taskDate time.Time, rules []string) (string, error) {
 	if len(rules) != 1 {
-		return "", errors.New("неверный формат правила повторения для дней")
+		return "", errors.New("неверный формат правила повторения для года")
 	}
 	if taskDate.After(now) {
 		taskDate = taskDate.AddDate(1, 0, 0)

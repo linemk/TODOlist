@@ -24,6 +24,8 @@ func NextDate(now time.Time, date string, repeat string) (string, error) {
 		return HandleDailyRepeat(now, taskDate, rules)
 	case "y":
 		return HandleYearRepeat(now, taskDate, rules)
+	case "w":
+		return HandleWeekRepeat(now, taskDate, rules)
 	default:
 		return "", errors.New("правило повторения не поддерживается")
 	}
