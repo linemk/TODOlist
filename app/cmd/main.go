@@ -35,6 +35,8 @@ func main() {
 	r.Get("/api/nextdate", handlers.HandlerForNewDate)
 	// добавление следующей задачи
 	r.Post("/api/task", handlers.PostTask)
+	// отображение задач
+	r.Get("/api/tasks", handlers.GetTasks)
 
 	// Запуск сервера
 	log.Printf("Сервер запущен на http://localhost:%s/", port)

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 	"todo-list/app/internal/commandsDB"
@@ -9,6 +10,7 @@ import (
 	"todo-list/app/internal/tasks"
 )
 
+// функция для обработки nextdate
 func HandlerForNewDate(w http.ResponseWriter, r *http.Request) {
 	nowStr := r.URL.Query().Get("now")
 	dateStr := r.URL.Query().Get("date")
@@ -77,7 +79,9 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 					http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
 					return
 				}
-				task.Date = nextDate
+				if task.Date != today {
+					task.Date = nextDate
+				}
 			}
 		}
 	}
@@ -101,4 +105,49 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"id": id,
 	})
+}
+
+// отображение задач
+func GetTasks(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error":"Метод не поддерживается"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// ограничение на кол-во возвращаемых задач
+	const limit = 50
+
+	tasks, err := commandsDB.FindInDB(limit)
+	if err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
+
+	// преобразуем задачи в формат, ожидаемый тестами
+	var tasksForResponse []map[string]string
+	for _, task := range tasks {
+		tasksForResponse = append(tasksForResponse, map[string]string{
+			"id":      fmt.Sprintf("%d", task.ID),
+			"date":    task.Date,
+			"title":   task.Title,
+			"comment": task.Comment,
+			"repeat":  task.Repeat,
+		})
+	}
+
+	// формируем JSON-ответ
+	response := map[string]interface{}{
+		"tasks": tasksForResponse,
+	}
+
+	fmt.Println(response)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, `{"error":"Ошибка формирования JSON-ответа"}`, http.StatusInternalServerError)
+		return
+	}
 }
