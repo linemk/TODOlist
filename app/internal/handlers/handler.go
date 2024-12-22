@@ -33,27 +33,24 @@ func HandlerForNewDate(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(nextDate))
 }
 
-// функция для добавления задачи
+// добавление задачи
 func PostTask(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
 	decoder := json.NewDecoder(r.Body)
-
 	var task = models.Remind{}
 	// декодируем JSON
 	if err := decoder.Decode(&task); err != nil {
 		http.Error(w, `{"error":"Ошибка декодирования JSON"}`, http.StatusBadRequest)
 		return
 	}
-
 	// Проверяем обязательное поле title
 	if task.Title == "" {
 		http.Error(w, `{"error":"Не указан заголовок задачи"}`, http.StatusBadRequest)
 		return
 	}
-
 	// начинаем проверку даты
 	now := time.Now()
 	today := now.Format("20060102")
@@ -84,27 +81,25 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-
-		// проверяем правило повторения в любом случае
-		if task.Repeat != "" {
-			_, err := tasks.NextDate(now, task.Date, task.Repeat)
-			if err != nil {
-				http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
-				return
-			}
-		}
-		id, err := commandsDB.InsertInDB(task)
+	}
+	// проверяем правило повторения в любом случае
+	if task.Repeat != "" {
+		_, err := tasks.NextDate(now, task.Date, task.Repeat)
 		if err != nil {
-			http.Error(w, `{"error":"Ошибка записи в БД"}`, http.StatusInternalServerError)
+			http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
 			return
 		}
-
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id": id,
-		})
 	}
+	id, err := commandsDB.InsertInDB(task)
+	if err != nil {
+		http.Error(w, `{"error":"Ошибка записи в БД"}`, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"id": id,
+	})
 }
 
 // отображение задач
