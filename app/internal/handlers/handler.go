@@ -84,27 +84,27 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-	}
 
-	// проверяем правило повторения в любом случае
-	if task.Repeat != "" {
-		_, err := tasks.NextDate(now, task.Date, task.Repeat)
+		// проверяем правило повторения в любом случае
+		if task.Repeat != "" {
+			_, err := tasks.NextDate(now, task.Date, task.Repeat)
+			if err != nil {
+				http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
+				return
+			}
+		}
+		id, err := commandsDB.InsertInDB(task)
 		if err != nil {
-			http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
+			http.Error(w, `{"error":"Ошибка записи в БД"}`, http.StatusInternalServerError)
 			return
 		}
-	}
-	id, err := commandsDB.InsertInDB(task)
-	if err != nil {
-		http.Error(w, `{"error":"Ошибка записи в БД"}`, http.StatusInternalServerError)
-		return
-	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id": id,
-	})
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"id": id,
+		})
+	}
 }
 
 // отображение задач
@@ -114,10 +114,12 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	search := r.URL.Query().Get("search")
+
 	// ограничение на кол-во возвращаемых задач
 	const limit = 50
 
-	tasks, err := commandsDB.FindInDB(limit)
+	tasks, err := commandsDB.FindInDB(search, limit)
 	if err != nil {
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
 		return
@@ -135,12 +137,15 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// если пустой, то возвращаем слайс
+	if tasksForResponse == nil {
+		tasksForResponse = []map[string]string{}
+	}
+
 	// формируем JSON-ответ
 	response := map[string]interface{}{
 		"tasks": tasksForResponse,
 	}
-
-	fmt.Println(response)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

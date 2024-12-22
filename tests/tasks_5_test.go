@@ -47,8 +47,7 @@ func TestTasks(t *testing.T) {
 	assert.NoError(t, err)
 
 	tasks := getTasks(t, "")
-	// скорее всего здесь ошибка, так как NotNill не может стоять после удаления
-	assert.Nil(t, tasks)
+	assert.NotNil(t, tasks)
 	assert.Empty(t, tasks)
 
 	addTask(t, task{
@@ -105,5 +104,4 @@ func TestTasks(t *testing.T) {
 	assert.Equal(t, len(tasks), 1)
 	tasks = getTasks(t, now.Format(`02.01.2006`))
 	assert.Equal(t, len(tasks), 3)
-
 }

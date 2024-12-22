@@ -2,6 +2,7 @@ package commandsDB
 
 import (
 	"errors"
+	"time"
 	"todo-list/app/config"
 	"todo-list/app/internal/models"
 )
@@ -21,10 +22,28 @@ func InsertInDB(task models.Remind) (uint64, error) {
 	return uint64(id), nil
 }
 
-func FindInDB(limit int) ([]models.Remind, error) {
-	query := "SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT ?"
+func FindInDB(search string, limit int) ([]models.Remind, error) {
+	var query string
+	var args []interface{}
 
-	rows, err := config.DB.Query(query, limit)
+	// Если параметр search пустой, возвращаем все задачи
+	if search == "" {
+		query = "SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT ?"
+		args = append(args, limit)
+	} else {
+		if parsedDate, err := time.Parse("02.01.2006", search); err == nil {
+			// если дата, используем сравнение по дате
+			query = "SELECT id, date, title, comment, repeat FROM scheduler WHERE date = ? ORDER BY date ASC LIMIT ?"
+			args = append(args, parsedDate.Format("20060102"), limit)
+		} else {
+			// если подстрока - в title и comment
+			likePattern := "%" + search + "%"
+			query = "SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE ? OR comment LIKE ? ORDER BY date ASC LIMIT ?"
+			args = append(args, likePattern, likePattern, limit)
+		}
+	}
+
+	rows, err := config.DB.Query(query, args...)
 	if err != nil {
 		return nil, errors.New("ошибка выполнения запроса к базе данных")
 	}
