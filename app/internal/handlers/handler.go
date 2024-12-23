@@ -94,14 +94,16 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	id, err := commandsDB.InsertInDB(task)
+	idForResponse := strconv.Itoa(int(id))
+
 	if err != nil {
 		http.Error(w, `{"error":"Ошибка записи в БД"}`, http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id": id,
+	json.NewEncoder(w).Encode(map[string]string{
+		"id": idForResponse,
 	})
 }
 
