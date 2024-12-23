@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
+	"strconv"
 	"time"
 	"todo-list/app/internal/commandsDB"
 	"todo-list/app/internal/models"
@@ -102,7 +105,7 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// отображение задач
+// отображение задач + поиск конкретной задачи
 func GetTasks(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, `{"error":"Метод не поддерживается"}`, http.StatusMethodNotAllowed)
@@ -150,4 +153,121 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"Ошибка формирования JSON-ответа"}`, http.StatusInternalServerError)
 		return
 	}
+}
+
+// получение одной задачи по ID
+func GetOneTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error":"Метод не поддерживается"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	idStr := chi.URLParam(r, "id")
+	if idStr == "" {
+		idStr = r.URL.Query().Get("id")
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, `{"error":"Некорректный идентификатор"}`, http.StatusBadRequest)
+		return
+	}
+	// получаем задачу
+	task, err := commandsDB.GetTaskByID(id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusNotFound)
+		return
+	}
+
+	response := map[string]string{
+		"id":      fmt.Sprintf("%d", task.ID),
+		"date":    task.Date,
+		"title":   task.Title,
+		"comment": task.Comment,
+		"repeat":  task.Repeat,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, `{"error":"Ошибка формирования JSON-ответа"}`, http.StatusInternalServerError)
+		return
+	}
+}
+
+// обновление задачи
+func PutTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, `{"error":"Метод не поддерживается"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var task models.Remind
+	if err := decoder.Decode(&task); err != nil {
+		http.Error(w, `{"error":"Ошибка декодирования JSON"}`, http.StatusBadRequest)
+		return
+	}
+
+	// проверяем наличие поля id
+	if task.ID == 0 {
+		http.Error(w, `{"error":"Не указан идентификатор задачи"}`, http.StatusBadRequest)
+		return
+	}
+
+	// проверяем также поле title
+	if task.Title == "" {
+		http.Error(w, `{"error":"Не указан заголовок задачи"}`, http.StatusBadRequest)
+		return
+	}
+
+	// проверяем дату
+	now := time.Now()
+	today := now.Format("20060102")
+	if task.Date == "" || task.Date == "today" {
+		task.Date = today
+	} else {
+		parsedDate, err := time.Parse("20060102", task.Date)
+		if err != nil {
+			http.Error(w, `{"error":"Некорректный формат даты"}`, http.StatusBadRequest)
+			return
+		}
+		if parsedDate.Before(time.Now()) {
+			if task.Repeat == "" {
+				task.Repeat = today
+			} else {
+				nextDate, err := tasks.NextDate(now, task.Date, task.Repeat)
+				if err != nil {
+					http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
+					return
+				}
+				if task.Date != today {
+					task.Date = nextDate
+				}
+			}
+		}
+	}
+	// проверяем правило повторения
+	if task.Repeat != "" {
+		_, err := tasks.NextDate(now, task.Date, task.Repeat)
+		if err != nil {
+			http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Обновляем задачу в базе данных
+	err := commandsDB.UpdateTask(task)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, `{"error":"Задача не найдена"}`, http.StatusNotFound)
+		} else {
+			http.Error(w, `{"error":"Ошибка обновления задачи"}`, http.StatusInternalServerError)
+		}
+		return
+	}
+	// Возвращаем пустой JSON-объект
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{}`))
 }
