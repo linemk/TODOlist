@@ -8,6 +8,7 @@ import (
 	"todo-list/app/internal/models"
 )
 
+// создаем задачу в БД
 func InsertInDB(task models.Remind) (uint64, error) {
 	query := "INSERT INTO scheduler (date, title, comment, repeat) VALUES (?, ?, ?, ?)"
 	res, err := config.DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat)
@@ -23,6 +24,7 @@ func InsertInDB(task models.Remind) (uint64, error) {
 	return uint64(id), nil
 }
 
+// реализуем поиск в БД
 func FindinDb(search string, limit int) ([]models.Remind, error) {
 	var query string
 	var args []interface{}
@@ -105,7 +107,7 @@ func DeleteTaskByID(id int) error {
 	return err
 }
 
-// обновление по дате
+// обновление задачи только при наличии remind по дате
 func UpdateTaskDate(id uint64, newDate string) error {
 	query := "UPDATE scheduler SET date = ? WHERE id = ?"
 	_, err := config.DB.Exec(query, newDate, id)

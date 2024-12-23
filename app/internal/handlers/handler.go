@@ -10,7 +10,7 @@ import (
 	"time"
 	"todo-list/app/internal/commandsDB"
 	"todo-list/app/internal/models"
-	"todo-list/app/internal/tasks"
+	"todo-list/app/internal/tasksRules"
 )
 
 // функция для обработки nextdate
@@ -25,7 +25,7 @@ func HandlerForNewDate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Вызываем функцию NextDate
-	nextDate, err := tasks.NextDate(now, dateStr, repeat)
+	nextDate, err := tasksRules.NextDate(now, dateStr, repeat)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -74,7 +74,7 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 				task.Date = today
 				// правило указано - дата - та, что в правиле
 			} else {
-				nextDate, err := tasks.NextDate(time.Now(), task.Date, task.Repeat)
+				nextDate, err := tasksRules.NextDate(time.Now(), task.Date, task.Repeat)
 				if err != nil {
 					http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
 					return
@@ -87,7 +87,7 @@ func PostTask(w http.ResponseWriter, r *http.Request) {
 	}
 	// проверяем правило повторения в любом случае
 	if task.Repeat != "" {
-		_, err := tasks.NextDate(now, task.Date, task.Repeat)
+		_, err := tasksRules.NextDate(now, task.Date, task.Repeat)
 		if err != nil {
 			http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
 			return
@@ -127,7 +127,7 @@ func GetTasks(w http.ResponseWriter, r *http.Request) {
 	var tasksForResponse []map[string]string
 	for _, task := range tasks {
 		tasksForResponse = append(tasksForResponse, map[string]string{
-			"id":      fmt.Sprintf("%d", task.ID),
+			"id":      task.ID,
 			"date":    task.Date,
 			"title":   task.Title,
 			"comment": task.Comment,
@@ -236,7 +236,7 @@ func PutTask(w http.ResponseWriter, r *http.Request) {
 			if task.Repeat == "" {
 				task.Repeat = today
 			} else {
-				nextDate, err := tasks.NextDate(now, task.Date, task.Repeat)
+				nextDate, err := tasksRules.NextDate(now, task.Date, task.Repeat)
 				if err != nil {
 					http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
 					return
@@ -249,7 +249,7 @@ func PutTask(w http.ResponseWriter, r *http.Request) {
 	}
 	// проверяем правило повторения
 	if task.Repeat != "" {
-		_, err := tasks.NextDate(now, task.Date, task.Repeat)
+		_, err := tasksRules.NextDate(now, task.Date, task.Repeat)
 		if err != nil {
 			http.Error(w, `{"error":"Некорректное правило повторения"}`, http.StatusBadRequest)
 			return
@@ -279,8 +279,12 @@ func DoneTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idStr := r.URL.Query().Get("id")
-	if idStr == "" {
+	idStr := chi.URLParam(r, "id") // Извлечение параметра из пути
+	if idStr == "" {               // Если параметр пустой, пробуем из строки запроса
+		idStr = r.URL.Query().Get("id")
+	}
+
+	if idStr == "" { // Если параметр всё ещё пустой, возвращаем ошибку
 		http.Error(w, `{"error":"Не указан идентификатор задачи"}`, http.StatusBadRequest)
 		return
 	}
@@ -311,7 +315,7 @@ func DoneTask(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		now := time.Now()
-		nextDate, err := tasks.NextDate(now, task.Date, task.Repeat)
+		nextDate, err := tasksRules.NextDate(now, task.Date, task.Repeat)
 		if err != nil {
 			http.Error(w, `{"error":"Ошибка расчёта следующей даты повторения"}`, http.StatusInternalServerError)
 			return

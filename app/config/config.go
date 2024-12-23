@@ -26,7 +26,7 @@ func MakeDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	// загружаем переменную
 	dbFile := os.Getenv("TODO_DBFILE")
 	if dbFile == "" {
 		dbFile = filepath.Join(filepath.Dir(appPath), "database", "scheduler.db")
@@ -44,7 +44,7 @@ func MakeDB() {
 		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 	}
 
-	// Если база данных новая, создаём таблицы и индексы
+	// если база данных новая, создаём таблицы и индексы
 	if install {
 		err = createSchema(DB)
 		if err != nil {

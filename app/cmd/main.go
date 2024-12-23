@@ -31,7 +31,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Handle("/*", http.FileServer(http.Dir(webDir)))
-	// API-маршрут для вычисления следующей даты
+	// вычисление следующей даты
 	r.Get("/api/nextdate", handlers.HandlerForNewDate)
 	// добавление следующей задачи
 	r.Post("/api/task", handlers.PostTask)
@@ -46,7 +46,7 @@ func main() {
 	// удаление задачи
 	r.Delete("/api/task", handlers.DeleteTask)
 
-	// Запуск сервера
+	// запуск сервера
 	log.Printf("Сервер запущен на http://localhost:%s/", port)
 	err := http.ListenAndServe(":"+port, r)
 	if err != nil {
