@@ -41,6 +41,8 @@ func main() {
 	r.Get("/api/task", handlers.GetOneTask)
 	// изменение одной задачи
 	r.Put("/api/task", handlers.PutTask)
+	// выполнение задачи
+	r.Post("/api/task/done", handlers.DoneTask)
 
 	// Запуск сервера
 	log.Printf("Сервер запущен на http://localhost:%s/", port)

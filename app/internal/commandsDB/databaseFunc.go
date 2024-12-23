@@ -23,7 +23,7 @@ func InsertInDB(task models.Remind) (uint64, error) {
 	return uint64(id), nil
 }
 
-func FindInDB(search string, limit int) ([]models.Remind, error) {
+func FindinDb(search string, limit int) ([]models.Remind, error) {
 	var query string
 	var args []interface{}
 
@@ -96,4 +96,18 @@ func UpdateTask(task models.Remind) error {
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+// удаление из БД
+func DeleteTaskByID(id int) error {
+	query := "DELETE FROM scheduler WHERE id = ?"
+	_, err := config.DB.Exec(query, id)
+	return err
+}
+
+// обновление по дате
+func UpdateTaskDate(id uint64, newDate string) error {
+	query := "UPDATE scheduler SET date = ? WHERE id = ?"
+	_, err := config.DB.Exec(query, newDate, id)
+	return err
 }
