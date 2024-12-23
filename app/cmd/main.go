@@ -43,6 +43,8 @@ func main() {
 	r.Put("/api/task", handlers.PutTask)
 	// выполнение задачи
 	r.Post("/api/task/done", handlers.DoneTask)
+	// удаление задачи
+	r.Delete("/api/task", handlers.DeleteTask)
 
 	// Запуск сервера
 	log.Printf("Сервер запущен на http://localhost:%s/", port)
