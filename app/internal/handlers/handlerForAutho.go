@@ -88,7 +88,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		// проверяем payload
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok || claims["password"] != envPassword {
-			http.Error(w, `{"error":"Токен недействителен"}`, http.StatusUnauthorized)
+			http.Redirect(w, r, "/login.html", http.StatusFound)
 			return
 		}
 		// кидаем на обработчик
