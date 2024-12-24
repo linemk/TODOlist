@@ -31,20 +31,30 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Handle("/*", http.FileServer(http.Dir(webDir)))
-	// вычисление следующей даты
-	r.Get("/api/nextdate", handlers.HandlerForNewDate)
-	// добавление следующей задачи
-	r.Post("/api/task", handlers.PostTask)
-	// отображение задач
-	r.Get("/api/tasks", handlers.GetTasks)
-	// получение одной задачи
-	r.Get("/api/task", handlers.GetOneTask)
-	// изменение одной задачи
-	r.Put("/api/task", handlers.PutTask)
-	// выполнение задачи
-	r.Post("/api/task/done", handlers.DoneTask)
-	// удаление задачи
-	r.Delete("/api/task", handlers.DeleteTask)
+
+	// обработчик для авторизации
+	r.Post("/api/signin", handlers.SignInHandler)
+
+	// защищенные маршруты будут прогоняться через токен
+	r.Route("/api", func(r chi.Router) {
+		// добавляем middleware
+		r.Use(handlers.AuthMiddleware)
+
+		// вычисление следующей даты
+		r.Get("/nextdate", handlers.HandlerForNewDate)
+		// добавление следующей задачи
+		r.Post("/task", handlers.PostTask)
+		// отображение задач
+		r.Get("/tasks", handlers.GetTasks)
+		// получение одной задачи
+		r.Get("/task", handlers.GetOneTask)
+		// изменение одной задачи
+		r.Put("/task", handlers.PutTask)
+		// выполнение задачи
+		r.Post("/task/done", handlers.DoneTask)
+		// удаление задачи
+		r.Delete("/task", handlers.DeleteTask)
+	})
 
 	// запуск сервера
 	log.Printf("Сервер запущен на http://localhost:%s/", port)
