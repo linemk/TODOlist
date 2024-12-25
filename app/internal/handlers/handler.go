@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"todo-list/app/internal/commandsDB"
-	"todo-list/app/internal/models"
-	"todo-list/app/internal/tasksRules"
+	"todo-list-project/app/internal/commandsDB"
+	"todo-list-project/app/internal/models"
+	"todo-list-project/app/internal/tasksRules"
 )
 
 // функция для обработки nextdate

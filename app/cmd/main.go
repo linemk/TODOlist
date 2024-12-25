@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"todo-list/app/config"
-	"todo-list/app/internal/handlers"
+	"todo-list-project/app/config"
+	"todo-list-project/app/internal/handlers"
 )
 
 var (

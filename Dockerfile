@@ -1,26 +1,30 @@
+# ЭТАП СБОРКИ (builder)
 FROM golang:1.23 AS builder
+
+# Сборка под ARM64 (M1)
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=arm64
+
 WORKDIR /app
 
+# копируем файлы для зависимостей
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN GOOS=linux GOARCH=amd64 go build -o my_app ./app/cmd
+RUN go build -o /my_app ./app/cmd
 
 FROM ubuntu:latest
+
 WORKDIR /app
 
+COPY --from=builder /my_app .
 
-COPY --from=builder /app/web ./web
-COPY --from=builder /app/my_app .
+COPY web ./web
 
 RUN mkdir -p /app/database
-
-ENV TODO_PORT=7540
-ENV TODO_DBFILE=./database/scheduler.db
-ENV JWT_SECRET=secret_key
-ENV TODO_PASSWORD=12345
 
 EXPOSE 7540
 

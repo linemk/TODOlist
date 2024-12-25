@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"time"
-	"todo-list/app/config"
-	"todo-list/app/internal/models"
+	"todo-list-project/app/config"
+	"todo-list-project/app/internal/models"
 )
 
 // создаем задачу в БД
