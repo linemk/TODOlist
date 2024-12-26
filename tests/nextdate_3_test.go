@@ -37,6 +37,7 @@ func TestNextDate(t *testing.T) {
 		{"20231225", "d 12", `20240130`},
 		{"20240228", "d 1", "20240229"},
 	}
+
 	check := func() {
 		for _, v := range tbl {
 			urlPath := fmt.Sprintf("api/nextdate?now=20240126&date=%s&repeat=%s",
@@ -53,9 +54,11 @@ func TestNextDate(t *testing.T) {
 		}
 	}
 	check()
+
 	if !FullNextDate {
 		return
 	}
+
 	tbl = []nextDate{
 		{"20231106", "m 13", "20240213"},
 		{"20240120", "m 40,11,19", ""},
